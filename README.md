@@ -5,10 +5,16 @@ Based on the TOML required for the update, it calculates continuous priorities a
 and performs ontology updates using the TOML representation. The resulting changes are then applied
 back to the OWL XML.
 
+# Installation
+```julia
+pkg> add https://github.com/isskj2020/OWLUpdate.jl
+```
 
 # Basic Functions
 
 ```julia
+using OWLUpdate
+
 # load XML
 ontology = parse_owl_xml(xml_filepath)
 # load TOML
