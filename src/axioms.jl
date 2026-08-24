@@ -61,7 +61,7 @@ end
     node_to_id::Dict{String, Int}
     id_to_node::Dict{Int, String}
     depths::Dict{Int, Int}
-    affected_nodes::Set{Int}
+    affected_nodes::Vector{Tuple{Int, Int}}
     disjoint_violations::Set{String}
     inconsistent_nodes::Set{Int}
 end

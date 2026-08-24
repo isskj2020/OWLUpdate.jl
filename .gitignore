@@ -30,4 +30,4 @@ JuliaLocalPreferences.toml
 build/
 .gradle/
 .vscode/
-
+bin/

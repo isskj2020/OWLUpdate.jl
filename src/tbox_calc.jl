@@ -30,7 +30,7 @@ function prepare_repair_context(ontology::OWLOntology, config::OWLConfig)
 
     dag = repair_cyclic_graph(dag)
 
-    affected_nodes = Set{Int}()
+    affected_nodes = Vector{Tuple{Int, Int}}()
     inconsistent_nodes = Set{Int}()
     disjoint_violations = Set{String}()
 
@@ -47,7 +47,11 @@ function prepare_repair_context(ontology::OWLOntology, config::OWLConfig)
             union!(inconsistent_nodes, violated)
             if !isempty(violated)
                 push!(disjoint_violations, "$axiom")
-                union!(affected_nodes, violated)
+                for src in violated
+                    for dst in find_reachable_node_set(dag, src; bounds = Set([aid, bid]))
+                        push!(affected_nodes, (src, dst))
+                    end
+                end
             end
         end
     end
@@ -86,7 +90,7 @@ function calculate_repair_cost(ontology::OWLOntology; config = OWLConfig())::OWL
         bid = ctx.node_to_id[node_b]
         if axiom isa SubClassOf
             depth = ctx.depths[aid]
-            violation = aid in ctx.affected_nodes && axiom.parent != K_OWL_THING
+            violation = !isempty(filter(x -> x[1] == aid && x[2] == bid, ctx.affected_nodes)) && axiom.parent != K_OWL_THING
         elseif axiom isa DisjointWith
             depth = max(ctx.depths[aid], ctx.depths[bid])
             violation = "$axiom" in ctx.disjoint_violations

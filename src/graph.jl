@@ -55,3 +55,25 @@ function dfs_ancestors(dag::SimpleDiGraph, x::Int; bounds::Set{Int})
     end
     return visited
 end
+
+function find_reachable_node_set(dag::SimpleDiGraph, x::Int; bounds::Set{Int})
+    res = Set{Int}()
+    for n in inneighbors(dag, x)
+        if can_reach_nodes(dag, n; bounds = bounds)
+            union!(res, n)
+        end
+    end
+    return res
+end
+
+function can_reach_nodes(dag::SimpleDiGraph, x::Int; bounds::Set{Int})
+    if x in bounds
+        return true
+    end
+    for n in inneighbors(dag, x)
+        if can_reach_nodes(dag, n; bounds = bounds)
+            return true
+        end
+    end
+    return false
+end
