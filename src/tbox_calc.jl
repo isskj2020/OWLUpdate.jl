@@ -89,7 +89,7 @@ function calculate_repair_cost(ontology::OWLOntology; config = OWLConfig())::OWL
         aid = ctx.node_to_id[node_a]
         bid = ctx.node_to_id[node_b]
         if axiom isa SubClassOf
-            depth = ctx.depths[aid]
+            depth = ctx.depths[bid] + 1
             violation = !isempty(filter(x -> x[1] == aid && x[2] == bid, ctx.affected_nodes)) && axiom.parent != K_OWL_THING
         elseif axiom isa DisjointWith
             depth = max(ctx.depths[aid], ctx.depths[bid])

@@ -12,6 +12,9 @@ const JAR_PATH_OWL_REASONER = joinpath(@__DIR__, "../owl-extractor/dists/owl-rea
 abstract type OWLAxiom end
 abstract type OWLContext end
 
+Base.:(==)(a::OWLAxiom, b::OWLAxiom) = "$a" == "$b"
+Base.hash(x::OWLAxiom, h::UInt) = hash("$x", h)
+
 @kwdef mutable struct OWLConfig
     decay_factor::Float64 = K_DEFAULT_DECAY_FACTOR
 end
