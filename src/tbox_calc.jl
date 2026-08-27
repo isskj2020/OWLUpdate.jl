@@ -1,4 +1,4 @@
-using Graphs, Format
+using Graphs, Format, Base.Threads
 
 
 function prepare_repair_context(ontology::OWLOntology, config::OWLConfig)
@@ -80,56 +80,70 @@ function calc_tbox_depths(dag::SimpleDiGraph)
     return depths
 end
 
-function calculate_repair_cost(ontology::OWLOntology; config = OWLConfig())::OWLAnalysis
+function calculate_repair_cost(ontology::OWLOntology; config = OWLConfig())
     ctx = prepare_repair_context(ontology, config)
+    axioms = ontology.axioms
 
-    results = Vector{OWLAxiomResult}()
-    for (i, axiom) in enumerate(ctx.ontology.axioms)
-        node_a, node_b = node_names(axiom)
-        aid = ctx.node_to_id[node_a]
-        bid = ctx.node_to_id[node_b]
-        if axiom isa SubClassOf
-            depth = ctx.depths[bid] + 1
-            violation = !isempty(filter(x -> x[1] == aid && x[2] == bid, ctx.affected_nodes)) && axiom.parent != K_OWL_THING
-        elseif axiom isa DisjointWith
-            depth = max(ctx.depths[aid], ctx.depths[bid])
-            violation = "$axiom" in ctx.disjoint_violations
-        end
+    results = Vector{OWLAxiomResult}(undef, length(axioms))
+    @threads for i in eachindex(axioms)
+        axiom = axioms[i]
+        depth = calc_depth(ctx, axiom)
+        violation = calc_violation(ctx, axiom)
         repair_cost = if violation
             axiom.priority * ctx.config.decay_factor^depth
         else
             K_DEFAULT_REPAIR_COST
         end
 
-        push!(results, OWLAxiomResult(id = randstring(32),
-                                      axiom = axiom,
-                                      depth = depth,
-                                      violation = violation,
-                                      repair_cost = repair_cost))
-    end
-
-    nodes = [OWLGraphNode(id = id, inconsistent = id in ctx.inconsistent_nodes) for id in vertices(ctx.dag)]
-    edges = Vector{OWLGraphEdge}()
-    for result in results
-        node_a, node_b = node_names(result.axiom)
-        source = ctx.node_to_id[node_a]
-        target = ctx.node_to_id[node_b]
-        push!(edges, OWLGraphEdge(source = source,
-                                 target = target,
-                                 violation = result.violation,
-                                 type = result.axiom.type,
-                                 label = "p=$(format("{:.2f}", result.axiom.priority))"))
+        results[i] = OWLAxiomResult(id = randstring(32),
+                                    axiom = axiom,
+                                    depth = depth,
+                                    violation = violation,
+                                    repair_cost = repair_cost)
     end
 
     return OWLAnalysis(config = config,
                        ontology = ontology,
                        violation_score = calc_violation_score(results),
-                       results = results,
-                       nodes = nodes,
-                       edges = edges,
-                       nodemap = ctx.id_to_node)
+                       results = results,)
 end
 
+
+function calculate_violation_scores(ontology::OWLOntology; config = OWLConfig())
+    ctx = prepare_repair_context(ontology, config)
+
+    scores = zeros(Int, length(ctx.ontology.axioms))
+    for (i, axiom) in enumerate(ctx.ontology.axioms)
+        violation = calc_violation(ctx, axiom)
+        scores[i] = axiom.priority * Int(violation)
+    end
+    return scores
+end
+
+
+function calc_depth(ctx::OWLRepairContext, axiom::OWLAxiom)
+    node_a, node_b = node_names(axiom)
+    aid = ctx.node_to_id[node_a]
+    bid = ctx.node_to_id[node_b]
+    if axiom isa SubClassOf
+        return ctx.depths[bid] + 1
+    elseif axiom isa DisjointWith
+        return max(ctx.depths[aid], ctx.depths[bid])
+    end
+    return 0
+end
+
+function calc_violation(ctx::OWLRepairContext, axiom::OWLAxiom)
+    node_a, node_b = node_names(axiom)
+    aid = ctx.node_to_id[node_a]
+    bid = ctx.node_to_id[node_b]
+    if axiom isa SubClassOf
+        return !isempty(filter(x -> x[1] == aid && x[2] == bid, ctx.affected_nodes)) && axiom.parent != K_OWL_THING
+    elseif axiom isa DisjointWith
+        return "$axiom" in ctx.disjoint_violations
+    end
+    return false
+end
 
 function append_tbox_root(axioms::Vector{OWLAxiom})
     children = Set{String}()

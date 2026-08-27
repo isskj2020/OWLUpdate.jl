@@ -31,3 +31,6 @@ build/
 .gradle/
 .vscode/
 bin/
+
+test/dataset*.txt
+test/dataset*.toml

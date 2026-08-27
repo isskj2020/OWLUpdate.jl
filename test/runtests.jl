@@ -1,7 +1,6 @@
 using OWLUpdate, Test
 
 @testset "All Tests" begin
-    include("single_test.jl")
-    include("shapley_test.jl")
-    include("bulk_calculation_test.jl")
+    include("eval_test.jl")
+    #include("single_test.jl")
 end

@@ -15,7 +15,7 @@ include("shapley_eval.jl")
 export OWLAxiom, OWLContext, OWLGraphNode, OWLGraphEdge,
        OWLAxiomResult, OWLOntology, OWLAnalysis, 
        parse_owl_xml, parse_owl_toml, save_owl_toml, apply_changes_owl_xml,
-       calculate_repair_cost,
+       calculate_repair_cost, calculate_violation_scores,
        delete_axiom!, save_removed_axioms,
        reason_owl_xml,
        ShapleyContext, ShapleyResult, ShapleyAnalysis, calculate_shapley_values

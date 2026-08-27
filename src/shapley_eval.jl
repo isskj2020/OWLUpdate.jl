@@ -1,9 +1,5 @@
-using Random
+using Random, Base.Threads
 
-@kwdef mutable struct ShapleyContext <: OWLContext
-    ontology::OWLOntology
-    samples::Int = 1000
-end
 
 @kwdef struct ShapleyResult
     id::String = randstring(32)
@@ -17,24 +13,28 @@ end
 
 
 function calculate_shapley_values(ontology::OWLOntology; samples = 1000)
-    ctx = ShapleyContext(ontology = ontology, samples = samples)
-    axioms = ctx.ontology.axioms
+    axioms = ontology.axioms
     n = length(axioms)
-    scores = zeros(Float64, n)
 
-    for _ in 1:ctx.samples
+    thread_size = nthreads()
+    sample_scores = [zeros(Float64, n) for _ in 1:samples]
+
+    @threads for sample in 1:samples
+        scores = sample_scores[sample]
+
         perm = randperm(n)
-        subset = Vector{OWLAxiom}()
-        prev = shapley_eval(ctx, subset)
+        subset = OWLAxiom[]
+        prev = shapley_eval(ontology, subset)
 
         for idx in perm
             push!(subset, axioms[idx])
-            value = shapley_eval(ctx, subset)
+            value = shapley_eval(ontology, subset)
             scores[idx] += value - prev
             prev = value
         end
     end
-    real_scores = scores ./ ctx.samples
+    scores = reduce(+, sample_scores)
+    real_scores = scores ./ samples
 
     results = Vector{ShapleyResult}()
     for (i, value) in enumerate(real_scores)
@@ -43,9 +43,11 @@ function calculate_shapley_values(ontology::OWLOntology; samples = 1000)
     return ShapleyAnalysis(results)
 end
 
-function shapley_eval(ctx::ShapleyContext, axioms::Vector{OWLAxiom})
-    ontology = deepcopy(ctx.ontology)
-    ontology.axioms = axioms
-    analysis = calculate_repair_cost(ontology)
-    return analysis.violation_score
+function shapley_eval(origin::OWLOntology, axioms::Vector{OWLAxiom})
+    ontology = OWLOntology(iri = origin.iri,
+                           version_iri = origin.version_iri,
+                           axioms = axioms,
+                           namespaces = origin.namespaces)
+    scores = calculate_violation_scores(ontology)
+    return sum(scores)
 end

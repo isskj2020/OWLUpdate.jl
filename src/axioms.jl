@@ -3,7 +3,7 @@ using Graphs
 const K_OWL_THING = "owl:Thing"
 const K_DEFAULT_PRIORITY = 1
 const K_DEFAULT_VIOLATION = false
-const K_DEFAULT_REPAIR_COST = typemax(Int)
+const K_DEFAULT_REPAIR_COST = 1
 const K_DEFAULT_DECAY_FACTOR = 0.5
 const JAR_PATH_OWL_EXTRACTOR = joinpath(@__DIR__, "../owl-extractor/dists/owl-extractor.jar")
 const JAR_PATH_OWL_UPDATE = joinpath(@__DIR__, "../owl-extractor/dists/owl-update.jar")
@@ -52,9 +52,6 @@ end
     ontology::OWLOntology
     violation_score::Float64
     results::Vector{OWLAxiomResult}
-    nodes::Vector{OWLGraphNode}
-    edges::Vector{OWLGraphEdge}
-    nodemap::Dict{Int, String}
 end
 
 @kwdef mutable struct OWLRepairContext <: OWLContext
