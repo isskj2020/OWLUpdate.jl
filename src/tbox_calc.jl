@@ -3,7 +3,7 @@ using Graphs, Format, Base.Threads
 
 function prepare_repair_context(ontology::OWLOntology, config::OWLConfig)
     ontology.axioms = append_tbox_root(ontology.axioms)
-    nodes = Vector{String}()
+    nodes = Set{String}()
     push!(nodes, K_OWL_THING)
     for axiom in ontology.axioms
         if axiom isa SubClassOf
@@ -14,7 +14,6 @@ function prepare_repair_context(ontology::OWLOntology, config::OWLConfig)
             push!(nodes, axiom.object)
         end
     end
-    unique!(nodes)
     node_to_id = Dict((n => i) for (i, n) in enumerate(nodes))
     id_to_node = Dict((i => n) for (i, n) in enumerate(nodes))
 

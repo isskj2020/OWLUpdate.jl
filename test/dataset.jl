@@ -26,6 +26,7 @@ function gen_subclass(words::Vector{String})
         push!(axioms, axiom)
         prev = c1
     end
+    @info "gen_subclass word size:$(length(words)) axioms:$(length(axioms))"
     return axioms
 end
 
@@ -35,12 +36,12 @@ function gen_disjoint(tree1::Vector{String}, tree2::Vector{String}, count::Int)
     for _ in 1:count
         i = rand(rng, 1:size-1)
         j = rand(rng, i+1:size)
-
         c1 = tree1[i]
-        c2 = tree1[j]
+        c2 = tree2[j]
         axiom = OWLUpdate.DisjointWith(subject = c1, object = c2)
         push!(axioms, axiom)
     end
+    @info "gen_disjoint tree size 1:$(length(tree1)) 2:$(length(tree2)) count:$count axioms:$(length(axioms))"
     return axioms
 end
 
@@ -50,12 +51,13 @@ function gen_cross_subclass(tree1::Vector{String}, tree2::Vector{String}, count:
     for _ in 1:count
         i = rand(rng, 1:size-1)
         j = rand(rng, i+1:size)
-
         c1 = tree1[i]
-        c2 = tree1[j]
+        c2 = tree2[j]
+
         axiom = OWLUpdate.SubClassOf(subject = c1, parent = c2)
         push!(axioms, axiom)
     end
+    @info "gen_cross_subclass tree size 1:$(length(tree1)) 2:$(length(tree2)) count:$count axioms:$(length(axioms))"
     return axioms
 end
 
@@ -105,6 +107,7 @@ function create_dataset(name::String, size::Int, tree_size::Int, cross_count::In
                 version_iri = version_iri,
                 axioms = gen_axioms(size, tree_size, cross_count),
                 namespaces = namespaces)
+    @info "generated axioms: $(length(ontology.axioms))"
     analysis = calculate_repair_cost(ontology; config = config)
     OWLUpdate.save_owl_toml(analysis, "$name.toml")
 end

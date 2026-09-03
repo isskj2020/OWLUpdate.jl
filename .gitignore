@@ -34,3 +34,4 @@ bin/
 
 test/dataset*.txt
 test/dataset*.toml
+test/dataset*.csv

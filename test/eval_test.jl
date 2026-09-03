@@ -4,9 +4,9 @@ using OWLUpdate, Test, DataFrames, CSV, Base.Threads
     @info "thread size: $(nthreads())"
 
     include("dataset.jl")
-    dataset_name = "dataset1-0.5"
-    size = 100
-    tree_size = 2
+    dataset_name = "dataset1-0.5-99-3-30"
+    size = 99
+    tree_size = 3
     cross_count = 30
     create_dataset(dataset_name, size, tree_size, cross_count)
 
@@ -15,7 +15,7 @@ using OWLUpdate, Test, DataFrames, CSV, Base.Threads
     #
     # Repair Strategy
     #
-    filename = "$dataset_name-$size-$tree_size-$cross_count-repair"
+    filename = "$dataset_name-repair"
     ontology = OWLUpdate.parse_owl_toml("./$dataset_name.toml")
     results = NamedTuple[]
     remove_count = 0
@@ -60,7 +60,7 @@ using OWLUpdate, Test, DataFrames, CSV, Base.Threads
     #
     # Shapley Strategy
     #
-    filename = "$dataset_name-$size-$tree_size-$cross_count-shapley"
+    filename = "$dataset_name-shapley"
     ontology = OWLUpdate.parse_owl_toml("./$dataset_name.toml")
     remove_count = 0
     results = NamedTuple[]
